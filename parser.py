@@ -46,7 +46,10 @@ def parse_ips():
         raise RuntimeError(f"Failed to parse log file: {e}")
     
 
-def parse_timestamp():
+# ---------------
+# Parse logs
+# ---------------
+def parse_logs():
     timestamp_data = []
     try:
         with open("sample_logs.txt", "r") as file:
@@ -69,12 +72,16 @@ def parse_timestamp():
                         'timestamp': timestamp,
                         'level': log_level,
                         'message': message,
+                        'ips': []
                     })
             return timestamp_data
     except Exception as e:
         raise RuntimeError(f"Failed to parse log file: {e}")
     
 
+# ---------------
+# Match on error string
+# ---------------
 def parse_errors():
     error_data = []
     try:
@@ -91,31 +98,38 @@ def parse_errors():
                 error_match = re.match(error_pattern, line)
                 if error_match:
                     print(f"{idx}: {line.strip()}")
-                    error_data.extend(line.strip())  # Add the entire line to the error data
+                    error_data.append(line.strip())  # Add the entire line to the error data
             return error_data
     except Exception as e:
         raise RuntimeError(f"Failed to parse log file: {e}")
     
     
-    
-def save_logs_to_csv(logs, filename = "parsed_logs.csv"):
-    # logs: list of dictionaries
+# ---------------
+# Save logs to CSV
+# ---------------    
+def save_logs_to_csv(timestamp_data, filename = "parsed_logs.csv"):
+    # error_data: list of dictionaries
     # filename: output CSV filename
     
     # Define the headers based on what your log dict contains
     headers = ['timestamp', 'level', 'message', 'ips']
-    
-    with open("parsed_logs.csv", 'w', newline='') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=headers)
-        writer.writeheader(headers)   # Write column headers
-        for log in logs:
-            # Join list of IPs into a single string for CSV
-            log_copy = log.copy()
-            log_copy['ips'] = ', '.join(log['ips'])
-            writer.writerow(log_copy)
-            return logs
-        
+    try:
+        with open("parsed_logs.csv", 'w', newline='') as csvfile:
+            writer = csv.DictWriter(csvfile, fieldnames=headers)
+            writer.writeheader()   # Write column headers
+            for log in timestamp_data:
+                # Join list of IPs into a single string for CSV
+                log_copy = log.copy()
+                log_copy['ips'] = ', '.join(log['ips'])
+                writer.writerow(log_copy)
+            print(f"Logs saved to {filename} successfully.")
+    except Exception as e:
+        print(f"\nFailed to save logs to CSV: {e}")
 
+
+# ---------------
+# Save logs to JSON
+# ---------------
 def save_logs_to_json(logs, filename):
     # Save the list of dicts as a JSON file
     with open(filename, 'w') as jsonfile:
@@ -139,5 +153,8 @@ error_pattern = r'\bERROR\b'
 if __name__ == "__main__":
     open_log()
     #parse_ips()
-    #parse_timestamp()
-    parse_errors()
+    parse_logs()
+    #errors =  parse_errors()
+    
+    #timestamp_and_error = parse_timestamp()
+    
